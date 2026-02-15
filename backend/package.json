@@ -1,0 +1,21 @@
+{
+  "name": "telegram-x402-ai",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@stacks/transactions": "^7.3.1",
+    "axios": "^1.13.5",
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.2.4",
+    "express": "^4.22.1",
+    "mongodb": "^7.1.0",
+    "node-fetch": "^3.3.2",
+    "node-telegram-bot-api": "^0.67.0",
+    "openai": "^6.22.0",
+    "x402-stacks": "^2.0.1"
+  }
+}
