@@ -1,4 +1,3 @@
-// ====== ENV & MODULES ======
 import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -16,7 +15,6 @@ import {
   decodePaymentResponse
 } from 'x402-stacks';
 
-// ====== ENV CONFIG ======
 const PORT = process.env.PORT || 8080;
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const BOT_PRIVATE_KEY = process.env.BOT_PRIVATE_KEY;
@@ -26,13 +24,11 @@ const AI_PAYMENT_AMOUNT = parseFloat(process.env.AI_PAYMENT_AMOUNT || '0.03');
 const FACILITATOR_URL = process.env.FACILITATOR_URL || 'https://facilitator.stacksx402.com';
 const BACKEND_URL = process.env.BACKEND_URL;
 
-// ====== EXPRESS APP ======
 const app = express();
 app.use(bodyParser.json());
 app.get('/', (req, res) => res.send('x402 AI Backend Running 🚀'));
 app.get('/health', (req, res) => res.json({ status: 'ok', network: NETWORK }));
 
-// ====== MONGODB ======
 let dbClient;
 let db;
 let isDbConnected = false;
@@ -50,13 +46,11 @@ async function initMongo() {
   }
 }
 
-// ====== BOT WALLET ======
 const botAccount = privateKeyToAccount(BOT_PRIVATE_KEY, NETWORK);
 const BOT_ADDRESS = botAccount.address;
 console.log('Bot STX Address:', BOT_ADDRESS);
 console.log('Network:', NETWORK);
 
-// ====== HELPERS ======
 async function getUserWallet(chatId) {
   if (!isDbConnected || !db) {
     console.error('Database not connected');
@@ -81,7 +75,6 @@ async function saveUserWallet(chatId, walletData) {
   );
 }
 
-// ====== AI ENDPOINT (Protected by x402-stacks) ======
 app.post(
   '/api/ai-query',
   paymentMiddleware({
@@ -95,14 +88,28 @@ app.post(
     const payment = getPayment(req);
     const { question, chatId } = req.body;
 
-    // Generate AI response (TODO: Integrate real AI API - Claude, OpenAI, etc.)
-    const aiAnswer = question.toLowerCase().includes('ai') 
-      ? 'AI (Artificial Intelligence) is the simulation of human intelligence by machines, especially computer systems. It includes learning, reasoning, and self-correction.'
-      : question.toLowerCase().includes('blockchain')
-      ? 'Blockchain is a distributed, immutable ledger that records transactions across a network of computers. It\'s the technology behind cryptocurrencies like Bitcoin and Stacks.'
-      : question.toLowerCase().includes('x402')
-      ? 'x402 is a payment protocol that uses HTTP 402 status code for micropayments. It enables services to charge for access using cryptocurrency, perfect for AI agents and pay-per-use models.'
-      : 'That\'s an interesting question! The x402 AI bot demonstrates blockchain-powered micropayments for AI services. Each query costs 0.03 STX and is recorded on-chain.';
+    const questionLower = question.toLowerCase();
+    
+    let aiAnswer;
+    if (questionLower.includes('blockchain')) {
+      aiAnswer = 'Blockchain is a distributed, immutable ledger that records transactions across a network of computers. It\'s the technology behind cryptocurrencies like Bitcoin and Stacks.';
+    } else if (questionLower.includes('x402')) {
+      aiAnswer = 'x402 is a payment protocol that uses HTTP 402 status code for micropayments. It enables services to charge for access using cryptocurrency, perfect for AI agents and pay-per-use models.';
+    } else if (questionLower.includes('stacks')) {
+      aiAnswer = 'Stacks is a Bitcoin layer-2 blockchain that enables smart contracts and decentralized apps while settling on Bitcoin. It uses STX as its native cryptocurrency.';
+    } else if (questionLower.includes('bitcoin')) {
+      aiAnswer = 'Bitcoin is the first and most well-known cryptocurrency, created in 2009. It\'s a decentralized digital currency without a central bank or administrator.';
+    } else if (questionLower.includes('ai') || questionLower.includes('artificial intelligence')) {
+      aiAnswer = 'AI (Artificial Intelligence) is the simulation of human intelligence by machines, especially computer systems. It includes learning, reasoning, and self-correction.';
+    } else if (questionLower.includes('nft')) {
+      aiAnswer = 'NFT (Non-Fungible Token) is a unique digital asset that represents ownership of a specific item or piece of content on the blockchain.';
+    } else if (questionLower.includes('crypto') || questionLower.includes('cryptocurrency')) {
+      aiAnswer = 'Cryptocurrency is a digital or virtual currency that uses cryptography for security. It operates independently of a central bank.';
+    } else if (questionLower.includes('payment') || questionLower.includes('pay')) {
+      aiAnswer = 'This bot uses micropayments via the x402-stacks protocol, allowing you to pay small amounts (0.03 STX) per AI query using cryptocurrency.';
+    } else {
+      aiAnswer = 'That\'s an interesting question! This bot demonstrates blockchain-powered micropayments for AI services. Each query costs 0.03 STX and is recorded on-chain. Ask me about blockchain, AI, x402, Stacks, or cryptocurrency!';
+    }
 
     const aiResponse = `🤖 *AI Response*\n\n` +
       `Question: "${question}"\n\n` +
@@ -111,7 +118,6 @@ app.post(
       `📝 Transaction: ${payment?.transaction}\n\n` +
       `🔗 Powered by x402-stacks payment protocol`;
 
-    // Store the response if DB is connected
     if (isDbConnected && db) {
       try {
         await db.collection('responses').insertOne({
@@ -142,7 +148,6 @@ app.post(
   }
 );
 
-// ====== FUNCTION TO MAKE PAID REQUEST ======
 async function makeAIPaidRequest(userPrivateKey, question, chatId) {
   try {
     const userAccount = privateKeyToAccount(userPrivateKey, NETWORK);
@@ -178,17 +183,13 @@ async function makeAIPaidRequest(userPrivateKey, question, chatId) {
   }
 }
 
-// ====== TELEGRAM BOT - Initialize after DB ======
 let bot;
 
 async function initBot() {
-  // Wait for MongoDB
   await initMongo();
   
-  // Initialize bot
   bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
   
-  // ====== BOT COMMANDS ======
 
   bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
@@ -342,7 +343,7 @@ async function initBot() {
       });
       
       bot.sendMessage(msg.chat.id, 
-        `✅ *Wallet Imported Successfully!*\n\n` +
+        ` *Wallet Imported Successfully!*\n\n` +
         `Address: \`${account.address}\`\n\n` +
         `Use /balance to check your funds`,
         { parse_mode: 'Markdown' }
@@ -386,7 +387,7 @@ async function initBot() {
       
       bot.sendMessage(chatId, 
         `${result.answer}\n\n` +
-        `🔗 [View Transaction on Explorer](${txUrl})`,
+        ` [View Transaction on Explorer](${txUrl})`,
         { parse_mode: 'Markdown' }
       );
       
@@ -395,7 +396,7 @@ async function initBot() {
       
       if (error.response?.status === 402) {
         bot.sendMessage(chatId, 
-          `❌ *Payment Required*\n\n` +
+          ` *Payment Required*\n\n` +
           `Your payment could not be processed.\n\n` +
           `Possible reasons:\n` +
           `• Insufficient balance (need ${AI_PAYMENT_AMOUNT} STX)\n` +
@@ -408,7 +409,7 @@ async function initBot() {
       } else {
         console.error('Query error:', error);
         bot.sendMessage(chatId, 
-          `❌ *Error Processing Request*\n\n` +
+          ` *Error Processing Request*\n\n` +
           `${error.message}\n\n` +
           `Please try again in a moment.\n` +
           `If the problem persists, contact support.`,
@@ -418,7 +419,6 @@ async function initBot() {
     }
   });
 
-  // Fallback handler for plain text messages
   bot.on('message', async (msg) => {
     if (msg.text && msg.text.startsWith('/')) return;
     if (!msg.text) return;
@@ -426,13 +426,13 @@ async function initBot() {
     const wallet = await getUserWallet(msg.chat.id);
     if (!wallet) {
       return bot.sendMessage(msg.chat.id, 
-        `❌ No wallet found\n\n` +
+        ` No wallet found\n\n` +
         `Use /start to create a wallet first`
       );
     }
     
     bot.sendMessage(msg.chat.id, 
-      `💡 *Tip:* Use the /ask command\n\n` +
+      ` *Tip:* Use the /ask command\n\n` +
       `Example:\n` +
       `/ask What is blockchain?\n\n` +
       `Your message: "${msg.text}"\n\n` +
@@ -443,17 +443,16 @@ async function initBot() {
 
   bot.on('polling_error', (error) => console.error('Telegram polling error:', error));
   
-  console.log('✅ Bot ready! Try it: https://t.me/X402AI_BOT');
+  console.log(' Bot ready! Try it: https://t.me/X402AI_BOT');
 }
 
-// ====== START SERVER ======
+
 app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Network: ${NETWORK}`);
-  console.log(`💰 Bot address: ${BOT_ADDRESS}`);
-  console.log(`💸 Payment amount: ${AI_PAYMENT_AMOUNT} STX`);
-  console.log(`🔗 Backend URL: ${BACKEND_URL || 'Not set'}`);
+  console.log(` Server running on port ${PORT}`);
+  console.log(` Network: ${NETWORK}`);
+  console.log(` Bot address: ${BOT_ADDRESS}`);
+  console.log(` Payment amount: ${AI_PAYMENT_AMOUNT} STX`);
+  console.log(` Backend URL: ${BACKEND_URL || 'Not set'}`);
   
-  // Initialize bot after server starts
   await initBot();
 });
