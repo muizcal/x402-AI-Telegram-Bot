@@ -17,7 +17,7 @@ import {
 } from 'x402-stacks';
 
 // ====== ENV CONFIG ======
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const BOT_PRIVATE_KEY = process.env.BOT_PRIVATE_KEY;
 const MONGO_URI = process.env.MONGO_URI;
