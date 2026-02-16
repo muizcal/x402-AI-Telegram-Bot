@@ -95,13 +95,21 @@ app.post(
     const payment = getPayment(req);
     const { question, chatId } = req.body;
 
+    // Generate AI response (TODO: Integrate real AI API - Claude, OpenAI, etc.)
+    const aiAnswer = question.toLowerCase().includes('ai') 
+      ? 'AI (Artificial Intelligence) is the simulation of human intelligence by machines, especially computer systems. It includes learning, reasoning, and self-correction.'
+      : question.toLowerCase().includes('blockchain')
+      ? 'Blockchain is a distributed, immutable ledger that records transactions across a network of computers. It\'s the technology behind cryptocurrencies like Bitcoin and Stacks.'
+      : question.toLowerCase().includes('x402')
+      ? 'x402 is a payment protocol that uses HTTP 402 status code for micropayments. It enables services to charge for access using cryptocurrency, perfect for AI agents and pay-per-use models.'
+      : 'That\'s an interesting question! The x402 AI bot demonstrates blockchain-powered micropayments for AI services. Each query costs 0.03 STX and is recorded on-chain.';
+
     const aiResponse = `🤖 *AI Response*\n\n` +
       `Question: "${question}"\n\n` +
-      `Answer: AI (Artificial Intelligence) is the simulation of human intelligence by machines, ` +
-      `especially computer systems. It includes learning, reasoning, and self-correction.\n\n` +
+      `Answer: ${aiAnswer}\n\n` +
       `✅ Payment confirmed: ${AI_PAYMENT_AMOUNT} STX\n` +
-      `🎟️ NFT minted as receipt!\n` +
-      `📝 Transaction: ${payment?.transaction}`;
+      `📝 Transaction: ${payment?.transaction}\n\n` +
+      `🔗 Powered by x402-stacks payment protocol`;
 
     // Store the response if DB is connected
     if (isDbConnected && db) {
@@ -115,7 +123,6 @@ app.post(
             payer: payment?.payer,
             amount: AI_PAYMENT_AMOUNT,
           },
-          nftMinted: true,
           timestamp: new Date(),
         });
       } catch (error) {
@@ -210,17 +217,18 @@ async function initBot() {
           `Your Stacks wallet has been generated:\n` +
           `📍 Address: \`${keypair.address}\`\n\n` +
           `⚠️ *IMPORTANT: Fund this wallet with STX!*\n` +
-          `💰 Minimum: ${AI_PAYMENT_AMOUNT} STX per query\n` +
+          `💰 Cost: ${AI_PAYMENT_AMOUNT} STX per query\n` +
           `🌐 Network: ${NETWORK}\n\n` +
-          `*How to fund:*\n` +
+          `*How to fund your wallet:*\n` +
           `1. Copy your address above\n` +
-          `2. Send STX from any wallet\n` +
-          `3. Use /balance to check\n\n` +
+          `2. Send STX from any Stacks wallet\n` +
+          `3. Use /balance to check funds\n\n` +
           `*Commands:*\n` +
-          `/info - Learn more\n` +
-          `/balance - Check STX\n` +
-          `/ask <question> - Ask AI\n` +
-          `/export - Get private key`,
+          `/info - Learn about the bot\n` +
+          `/balance - Check STX balance\n` +
+          `/ask <question> - Ask AI (costs ${AI_PAYMENT_AMOUNT} STX)\n` +
+          `/export - Export private key\n` +
+          `/import <key> - Import existing wallet`,
           { parse_mode: 'Markdown' }
         );
       } catch (error) {
@@ -241,31 +249,36 @@ async function initBot() {
   bot.onText(/\/info/, (msg) => {
     bot.sendMessage(msg.chat.id, 
       `🤖 *x402 AI Telegram Bot*\n\n` +
-      `This bot uses the x402-stacks payment protocol for blockchain-powered AI queries.\n\n` +
+      `This bot demonstrates the x402-stacks payment protocol - enabling micropayments for AI services using blockchain.\n\n` +
       `*How it works:*\n` +
-      `1️⃣ You get a Stacks wallet (/start)\n` +
-      `2️⃣ Fund it with STX\n` +
+      `1️⃣ Get a Stacks wallet (/start)\n` +
+      `2️⃣ Fund it with STX cryptocurrency\n` +
       `3️⃣ Ask questions (/ask)\n` +
-      `4️⃣ Payment auto-deducted via x402\n` +
-      `5️⃣ Receive AI response + NFT receipt\n\n` +
-      `*Pricing:*\n` +
-      `💰 ${AI_PAYMENT_AMOUNT} STX per query\n` +
-      `🎟️ Free NFT receipt with each payment\n\n` +
-      `*Network:* ${NETWORK}\n` +
-      `*Bot Wallet:* \`${BOT_ADDRESS}\`\n\n` +
+      `4️⃣ Payment auto-deducted via HTTP 402 protocol\n` +
+      `5️⃣ Receive AI response with transaction proof\n\n` +
+      `*Key Features:*\n` +
+      `💰 Micropayments: ${AI_PAYMENT_AMOUNT} STX per query\n` +
+      `⚡ Instant: Payments in seconds\n` +
+      `🔗 Transparent: All transactions on-chain\n` +
+      `🤖 AI-Agent Ready: Programmatic payments\n\n` +
+      `*Technical Details:*\n` +
+      `Network: ${NETWORK}\n` +
+      `Protocol: x402-stacks V2\n` +
+      `Bot Wallet: \`${BOT_ADDRESS}\`\n\n` +
       `*Commands:*\n` +
-      `/start - Get wallet\n` +
+      `/start - Generate wallet\n` +
       `/balance - Check balance\n` +
       `/ask <question> - Ask AI\n` +
       `/export - Export key\n` +
-      `/import <key> - Import wallet`,
+      `/import <key> - Import wallet\n\n` +
+      `🔗 Learn more: https://docs.stacksx402.com`,
       { parse_mode: 'Markdown' }
     );
   });
 
   bot.onText(/\/balance/, async (msg) => {
     const wallet = await getUserWallet(msg.chat.id);
-    if (!wallet) return bot.sendMessage(msg.chat.id, '❌ Use /start first');
+    if (!wallet) return bot.sendMessage(msg.chat.id, '❌ Use /start first to create a wallet');
 
     try {
       const apiUrl = 'https://api.hiro.so';
@@ -275,7 +288,7 @@ async function initBot() {
       const data = await resp.json();
       const balanceSTX = parseFloat(data.stx.balance) / 1_000_000;
       
-      const explorerUrl = `https://explorer.hiro.so/address/${wallet.address}?chain=mainnet`;
+      const explorerUrl = `https://explorer.hiro.so/address/${wallet.address}?chain=${NETWORK}`;
       
       bot.sendMessage(msg.chat.id, 
         `💰 *Your Balance*\n\n` +
@@ -291,7 +304,7 @@ async function initBot() {
       bot.sendMessage(msg.chat.id, 
         `❌ Error fetching balance\n\n` +
         `Wallet: \`${wallet.address}\`\n\n` +
-        `[Check manually on Explorer](https://explorer.hiro.so/address/${wallet.address}?chain=mainnet)`,
+        `[Check manually on Explorer](https://explorer.hiro.so/address/${wallet.address}?chain=${NETWORK})`,
         { parse_mode: 'Markdown' }
       );
     }
@@ -299,13 +312,15 @@ async function initBot() {
 
   bot.onText(/\/export/, async (msg) => {
     const wallet = await getUserWallet(msg.chat.id);
-    if (!wallet) return bot.sendMessage(msg.chat.id, '❌ Use /start first');
+    if (!wallet) return bot.sendMessage(msg.chat.id, '❌ Use /start first to create a wallet');
+    
     bot.sendMessage(msg.chat.id, 
       `🔑 *Your Private Key*\n\n` +
       `\`${wallet.privateKey}\`\n\n` +
-      `⚠️ *KEEP THIS SECRET!*\n` +
+      `⚠️ *KEEP THIS SECRET!*\n\n` +
       `Never share this key with anyone.\n` +
-      `Anyone with this key can access your funds.`,
+      `Anyone with this key can access your funds.\n\n` +
+      `Use this to import your wallet elsewhere or recover access.`,
       { parse_mode: 'Markdown' }
     );
   });
@@ -316,21 +331,29 @@ async function initBot() {
     }
     
     try {
-      const account = privateKeyToAccount(match[1].trim(), NETWORK);
+      const privateKey = match[1].trim();
+      const account = privateKeyToAccount(privateKey, NETWORK);
+      
       await saveUserWallet(msg.chat.id, {
         chatId: msg.chat.id,
         address: account.address,
-        privateKey: match[1].trim(),
+        privateKey: privateKey,
         importedAt: new Date(),
       });
+      
       bot.sendMessage(msg.chat.id, 
-        `✅ *Wallet Imported!*\n\n` +
+        `✅ *Wallet Imported Successfully!*\n\n` +
         `Address: \`${account.address}\`\n\n` +
         `Use /balance to check your funds`,
         { parse_mode: 'Markdown' }
       );
     } catch (err) {
-      bot.sendMessage(msg.chat.id, '❌ Invalid private key. Please check and try again.');
+      console.error('Import error:', err);
+      bot.sendMessage(msg.chat.id, 
+        `❌ Invalid private key\n\n` +
+        `Please check the key and try again.\n` +
+        `Format: 64 character hex string`
+      );
     }
   });
 
@@ -339,26 +362,31 @@ async function initBot() {
     const question = match[1];
     const wallet = await getUserWallet(chatId);
     
-    if (!wallet) return bot.sendMessage(chatId, '❌ Use /start first to get a wallet');
+    if (!wallet) {
+      return bot.sendMessage(chatId, 
+        `❌ No wallet found\n\n` +
+        `Use /start to create a wallet first`
+      );
+    }
     
     const processingMsg = await bot.sendMessage(chatId, 
       `🔍 *Processing your question...*\n\n` +
       `"${question}"\n\n` +
-      `💸 Deducting ${AI_PAYMENT_AMOUNT} STX...\n` +
-      `⏳ Please wait...`,
+      `💸 Deducting ${AI_PAYMENT_AMOUNT} STX from your wallet...\n` +
+      `⏳ Please wait (this may take 10-30 seconds)...`,
       { parse_mode: 'Markdown' }
     );
 
     try {
       const result = await makeAIPaidRequest(wallet.privateKey, question, chatId);
       
-      const txUrl = `https://explorer.hiro.so/txid/${result.payment.transaction}?chain=mainnet`;
+      const txUrl = `https://explorer.hiro.so/txid/${result.payment.transaction}?chain=${NETWORK}`;
       
       bot.deleteMessage(chatId, processingMsg.message_id).catch(() => {});
       
       bot.sendMessage(chatId, 
         `${result.answer}\n\n` +
-        `🔗 [View Transaction](${txUrl})`,
+        `🔗 [View Transaction on Explorer](${txUrl})`,
         { parse_mode: 'Markdown' }
       );
       
@@ -368,30 +396,40 @@ async function initBot() {
       if (error.response?.status === 402) {
         bot.sendMessage(chatId, 
           `❌ *Payment Required*\n\n` +
-          `Could not process payment. Please check:\n` +
-          `1. Your wallet has sufficient balance (${AI_PAYMENT_AMOUNT} STX needed)\n` +
-          `2. Use /balance to verify funds\n\n` +
-          `Need to fund your wallet?\n` +
-          `Address: \`${wallet.address}\``,
+          `Your payment could not be processed.\n\n` +
+          `Possible reasons:\n` +
+          `• Insufficient balance (need ${AI_PAYMENT_AMOUNT} STX)\n` +
+          `• Network congestion\n` +
+          `• Invalid transaction\n\n` +
+          `Use /balance to check your funds\n\n` +
+          `Your wallet: \`${wallet.address}\``,
           { parse_mode: 'Markdown' }
         );
       } else {
+        console.error('Query error:', error);
         bot.sendMessage(chatId, 
           `❌ *Error Processing Request*\n\n` +
           `${error.message}\n\n` +
-          `Please try again or contact support.`,
+          `Please try again in a moment.\n` +
+          `If the problem persists, contact support.`,
           { parse_mode: 'Markdown' }
         );
       }
     }
   });
 
+  // Fallback handler for plain text messages
   bot.on('message', async (msg) => {
     if (msg.text && msg.text.startsWith('/')) return;
     if (!msg.text) return;
     
     const wallet = await getUserWallet(msg.chat.id);
-    if (!wallet) return bot.sendMessage(msg.chat.id, '❌ Use /start first');
+    if (!wallet) {
+      return bot.sendMessage(msg.chat.id, 
+        `❌ No wallet found\n\n` +
+        `Use /start to create a wallet first`
+      );
+    }
     
     bot.sendMessage(msg.chat.id, 
       `💡 *Tip:* Use the /ask command\n\n` +
@@ -403,7 +441,7 @@ async function initBot() {
     );
   });
 
-  bot.on('polling_error', (error) => console.error('Telegram error:', error));
+  bot.on('polling_error', (error) => console.error('Telegram polling error:', error));
   
   console.log('✅ Bot ready! Try it: https://t.me/X402AI_BOT');
 }
@@ -414,7 +452,7 @@ app.listen(PORT, async () => {
   console.log(`🌐 Network: ${NETWORK}`);
   console.log(`💰 Bot address: ${BOT_ADDRESS}`);
   console.log(`💸 Payment amount: ${AI_PAYMENT_AMOUNT} STX`);
-  console.log(`🔗 Backend URL: ${BACKEND_URL}`);
+  console.log(`🔗 Backend URL: ${BACKEND_URL || 'Not set'}`);
   
   // Initialize bot after server starts
   await initBot();
