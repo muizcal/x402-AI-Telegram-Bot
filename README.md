@@ -205,13 +205,8 @@ const api = wrapAxiosWithPayment(axios.create(), account);
 const response = await api.post('/api/ai-query', data);
 ```
 
-##  Hackathon Requirements Checklist
+##  Demo video
 
--  Public GitHub repository
--  Working demo (Telegram bot live)
-- x402-stacks integration (HTTP 402 protocol)
--  Open source code
--  Clear documentation
 - [ Video demo](https://drive.google.com/file/d/1lKTKA79HZpEnt8hTeJvZO9bq6ZpIGzjy/view?usp=drivesdk)
  
 
