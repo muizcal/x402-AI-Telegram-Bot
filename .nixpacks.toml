@@ -1,8 +1,14 @@
 [phases.setup]
-nixPkgs = ["nodejs"]
+node_version = "18"
 
 [phases.install]
-cmds = ["cd backend && npm install"]
+command = "npm install"
 
-[start]
-cmd = "cd backend && npm start"
+[phases.build]
+command = ""
+
+[phases.start]
+command = "npm start"
+
+[project]
+root = "backend"
