@@ -179,10 +179,10 @@ const response = await api.post('/api/ai-query', { question, chatId });
 
 ##  Security
 
-- ✅ Private keys stored securely in MongoDB
-- ✅ Environment variables for sensitive data
-- ✅ .gitignore prevents credential leaks
-- ✅ Payment verification via x402-stacks facilitator
+-  Private keys stored securely in MongoDB
+-  Environment variables for sensitive data
+-  .gitignore prevents credential leaks
+-  Payment verification via x402-stacks facilitator
 
 ##  x402-stacks Integration
 
