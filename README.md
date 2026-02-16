@@ -210,15 +210,6 @@ const response = await api.post('/api/ai-query', data);
 - [ Video demo](https://drive.google.com/file/d/1lKTKA79HZpEnt8hTeJvZO9bq6ZpIGzjy/view?usp=drivesdk)
  
 
-##  Known Limitations
-
-1. **Payment Flow:** Client-side payment signing not yet fully automated in Telegram
-2. **AI Integration:** Using placeholder responses (AI API integration pending)
-3. **NFT Minting:** Automatic minting on payment confirmation in development
-4. **Deployment:** Backend needs to be deployed to public URL for full functionality
-
-
-
 
 **Try it now:** [https://t.me/X402AI_BOT](https://t.me/X402AI_BOT)
 
