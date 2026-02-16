@@ -24,7 +24,7 @@ const MONGO_URI = process.env.MONGO_URI;
 const NETWORK = process.env.NETWORK || 'mainnet';
 const AI_PAYMENT_AMOUNT = parseFloat(process.env.AI_PAYMENT_AMOUNT || '0.03');
 const FACILITATOR_URL = process.env.FACILITATOR_URL || 'https://facilitator.stacksx402.com';
-const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+const BACKEND_URL = process.env.BACKEND_URL;
 
 // ====== EXPRESS APP ======
 const app = express();
